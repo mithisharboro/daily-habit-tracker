@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance & Habit Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #ffffff;
+            --bg-subtle: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-elevated: #f1f5f9;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-blue: #2563eb;
+            --accent-emerald: #059669;
+            --accent-amber: #d97706;
+            --accent-violet: #7c3aed;
+            --ring-track: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            padding: 28px 24px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Top Navigation Bar */
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 24px;
+            margin-bottom: 24px;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .brand h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sunday-pill {
+            background: #f3e8ff;
+            color: #6d28d9;
+            border: 1px solid #ddd6fe;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: none;
+        }
+
+        .brand p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 3px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button, input[type="date"], input[type="time"], input[type="number"], input[type="text"] {
+            background: var(--bg-main);
+            color: var(--text-primary);
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 500;
+            background: var(--bg-subtle);
+        }
+
+        button:hover {
+            border-color: #94a3b8;
+            background: var(--bg-elevated);
+        }
+
+        button.btn-primary {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        button.btn-primary:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+
+        /* Circular Analytics Row */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 960px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 540px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ring-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .svg-ring-wrap {
+            position: relative;
+            width: 84px;
+            height: 84px;
+            flex-shrink: 0;
+        }
+
+        .svg-ring-wrap svg {
+            transform: rotate(-90deg);
+            width: 84px;
+            height: 84px;
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: var(--ring-track);
+            stroke-width: 7;
+        }
+
+        .ring-fill {
+            fill: none;
+            stroke-width: 7;
+            stroke-linecap: round;
+            stroke-dasharray: 226.2; /* 2 * PI * 36 */
+            stroke-dashoffset: 226.2;
+            transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ring-center-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text-primary);
+        }
+
+        .ring-center-sub {
+            font-size: 0.62rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .ring-info h3 {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 4px;
+        }
+
+        .ring-info .metric-val {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .ring-info .metric-sub {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main Two-Column Workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 860px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h2 {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* Checklist Items */
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 13px 15px;
+            margin-bottom: 10px;
+            transition: 0.2s;
+        }
+
+        .task-item.done {
+            border-color: #a7f3d0;
+            background: #ecfdf5;
+        }
+
+        .task-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-emerald);
+            cursor: pointer;
+        }
+
+        .task-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .task-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* 10-Hour Study Matrix */
+        .hour-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 14px 0;
+        }
+
+        .hour-cell {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .hour-cell:hover {
+            border-color: var(--border-strong);
+            background: var(--bg-elevated);
+        }
+
+        .hour-cell.active {
+            background: #eff6ff;
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .hour-cell.target-zone.active {
+            background: #ecfdf5;
+            border-color: var(--accent-emerald);
+            color: var(--accent-emerald);
+        }
+
+        /* Sunday Panel */
+        .sunday-card {
+            border-color: #ddd6fe;
+            background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+        }
+
+        /* Circular 7-Day Consistency Strip */
+        .history-strip {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 700px) {
+            .history-strip {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .history-node {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .history-node:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+            background: #ffffff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .history-node.selected {
+            border-color: var(--accent-blue);
+            background: #eff6ff;
+        }
+
+        .history-node.sunday-node {
+            border-top: 3px solid var(--accent-violet);
+        }
+
+        .mini-ring-wrap {
+            position: relative;
+            width: 52px;
+            height: 52px;
+            margin: 8px 0;
+        }
+
+        .mini-ring-wrap svg {
+            transform: rotate(-90deg);
+            width: 52px;
+            height: 52px;
+        }
+
+        .mini-ring-bg {
+            fill: none;
+            stroke: var(--ring-track);
+            stroke-width: 5;
+        }
+
+        .mini-ring-fill {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 138.2; /* 2 * PI * 22 */
+            transition: stroke-dashoffset 0.4s ease;
+        }
+
+        .mini-ring-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.875rem;
+            min-height: 92px;
+            resize: vertical;
+            margin-top: 8px;
+            outline: none;
+        }
+
+        textarea:focus {
+            background: #ffffff;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Top Header -->
+    <header class="topbar">
+        <div class="brand">
+            <h1>
+                Habit & Study Analytics
+                <span id="sundayPill" class="sunday-pill">Sunday Protocol</span>
+            </h1>
+            <p id="formattedDateText">Loading date...</p>
+        </div>
+        <div class="controls">
+            <button onclick="shiftDate(-1)">&larr; Prev</button>
+            <input type="date" id="dateInput" onchange="loadSelectedDate()">
+            <button onclick="shiftDate(1)">Next &rarr;</button>
+            <button class="btn-primary" onclick="jumpToday()">Today</button>
+            <button onclick="exportBackup()" title="Download JSON backup">Export</button>
+        </div>
+    </header>
+
+    <!-- Circular Analytics Overview -->
+    <section class="analytics-grid">
+        <!-- Ring 1: Overall Daily Score -->
+        <div class="ring-card">
+            <div class="svg-ring-wrap">
+                <svg viewBox="0 0 84 84">
+                    <circle class="ring-bg" cx="42" cy="42" r="36"></circle>
+                    <circle class="ring-fill" id="ringOverall" cx="42" cy="42" r="36" stroke="#059669"></circle>
+                </svg>
+                <div class="ring-center-text">
+                    <span id="pctOverallText">0%</span>
+                    <span class="ring-center-sub">SCORE</span>
+                </div>
+            </div>
+            <div class="ring-info">
+                <h3>Daily Execution</h3>
+                <div class="metric-val" id="tasksCompletedText">0 / 4 Tasks</div>
+                <div class="metric-sub" id="executionStatus">Pending targets</div>
+            </div>
+        </div>
+
+        <!-- Ring 2: Study Hours (8-10h) -->
+        <div class="ring-card">
+            <div class="svg-ring-wrap">
+                <svg viewBox="0 0 84 84">
+                    <circle class="ring-bg" cx="42" cy="42" r="36"></circle>
+                    <circle class="ring-fill" id="ringStudy" cx="42" cy="42" r="36" stroke="#2563eb"></circle>
+                </svg>
+                <div class="ring-center-text">
+                    <span id="hrsStudyRingText">0h</span>
+                    <span class="ring-center-sub">/ 10h</span>
+                </div>
+            </div>
+            <div class="ring-info">
+                <h3>Deep Study</h3>
+                <div class="metric-val" id="studyGoalLabel">Target: 8–10h</div>
+                <div class="metric-sub" id="studyRemainingSub">8h left to min goal</div>
+            </div>
+        </div>
+
+        <!-- Ring 3: Wake-Up Discipline -->
+        <div class="ring-card">
+            <div class="svg-ring-wrap">
+                <svg viewBox="0 0 84 84">
+                    <circle class="ring-bg" cx="42" cy="42" r="36"></circle>
+                    <circle class="ring-fill" id="ringWakeup" cx="42" cy="42" r="36" stroke="#d97706"></circle>
+                </svg>
+                <div class="ring-center-text">
+                    <span id="wakeupRingText">--:--</span>
+                    <span class="ring-center-sub">WAKE</span>
+                </div>
+            </div>
+            <div class="ring-info">
+                <h3>Morning Routine</h3>
+                <div class="metric-val" id="morningRatioText">0 / 2 Done</div>
+                <div class="metric-sub">Wake-up + Prep</div>
+            </div>
+        </div>
+
+        <!-- Ring 4: Sunday Protocol -->
+        <div class="ring-card">
+            <div class="svg-ring-wrap">
+                <svg viewBox="0 0 84 84">
+                    <circle class="ring-bg" cx="42" cy="42" r="36"></circle>
+                    <circle class="ring-fill" id="ringSunday" cx="42" cy="42" r="36" stroke="#7c3aed"></circle>
+                </svg>
+                <div class="ring-center-text">
+                    <span id="sundayRingText">N/A</span>
+                    <span class="ring-center-sub">SUNDAY</span>
+                </div>
+            </div>
+            <div class="ring-info">
+                <h3>Sunday Protocol</h3>
+                <div class="metric-val" id="sundayMetricVal">Mock + 2h Act.</div>
+                <div class="metric-sub" id="sundayMetricSub">Active every Sunday</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        <!-- Left Column -->
+        <div>
+            <!-- Morning Discipline -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Morning Discipline</h2>
+                    <span class="tag">Daily Foundation</span>
+                </div>
+
+                <div class="task-item" id="itemWakeup">
+                    <div class="task-left">
+                        <input type="checkbox" id="chkWakeup" onchange="persistCurrentDay()">
+                        <div>
+                            <div class="task-title">Wake-Up Check-In</div>
+                            <div class="task-desc">Log exact wake-up timestamp</div>
+                        </div>
+                    </div>
+                    <input type="time" id="inpWakeupTime" value="05:30" onchange="persistCurrentDay()">
+                </div>
+
+                <div class="task-item" id="itemPrep">
+                    <div class="task-left">
+                        <input type="checkbox" id="chkPrep" onchange="persistCurrentDay()">
+                        <div>
+                            <div class="task-title">Morning Exercise & Readiness</div>
+                            <div class="task-desc">Hydration, physical warm-up, desk ready</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deep Study 8-10 Hours -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Study Volume Tracker (8–10 Hours)</h2>
+                    <span class="tag" id="studyStatusBadge">0 / 10 Hours</span>
+                </div>
+                <p class="task-desc">Select completed 1-hour blocks. Blocks 8–10 represent peak daily output:</p>
+
+                <div class="hour-grid" id="hourBlocksGrid"></div>
+
+                <div class="task-item" id="itemStudyGoal" style="margin-top: 12px; margin-bottom: 0;">
+                    <div class="task-left">
+                        <input type="checkbox" id="chkStudyMin" disabled>
+                        <div>
+                            <div class="task-title">Minimum 8-Hour Benchmark Reached</div>
+                            <div class="task-desc">Auto-verified upon logging 8 study hours</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+            <!-- Sunday Special Protocol -->
+            <div class="card sunday-card">
+                <div class="card-header">
+                    <h2>Sunday Mock & Activity Protocol</h2>
+                    <span class="tag" style="background: #f3e8ff; color: #6d28d9;">Every Sunday</span>
+                </div>
+
+                <div class="task-item" id="itemMock">
+                    <div class="task-left">
+                        <input type="checkbox" id="chkMock" onchange="persistCurrentDay()">
+                        <div>
+                            <div class="task-title">Full-Length Mock Test</div>
+                            <div class="task-desc">Timed exam + post-test analysis</div>
+                        </div>
+                    </div>
+                    <input type="text" id="inpMockScore" placeholder="Score (e.g. 160)" style="width: 125px;" onchange="persistCurrentDay()">
+                </div>
+
+                <div class="task-item" id="itemActivity" style="margin-bottom: 0;">
+                    <div class="task-left">
+                        <input type="checkbox" id="chkActivity" onchange="persistCurrentDay()">
+                        <div>
+                            <div class="task-title">2-Hour Refresh Activity</div>
+                            <div class="task-desc">Sports, hobby, or outdoor break (120m)</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <input type="number" id="inpActivityMins" value="120" min="0" max="360" style="width: 72px;" onchange="persistCurrentDay()">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Night Review & Log -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Daily Review & Record</h2>
+                    <span class="tag">Auto-Saved</span>
+                </div>
+
+                <div class="task-item" id="itemReview">
+                    <div class="task-left">
+                        <input type="checkbox" id="chkReview" onchange="persistCurrentDay()">
+                        <div>
+                            <div class="task-title">Evening Revision & Next-Day Plan</div>
+                            <div class="task-desc">Consolidate notes & queue tomorrow's topics</div>
+                        </div>
+                    </div>
+                </div>
+
+                <label class="task-desc" for="txtNotes">Session Log / Mock Test Takeaways / Activity Notes:</label>
+                <textarea id="txtNotes" placeholder="Record topics completed, mock test accuracy, or Sunday activity details..." oninput="persistCurrentDay()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7-Day Circular Consistency History -->
+    <section class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <h2>7-Day Circular Consistency Record</h2>
+            <span class="tag">Click any day to inspect or edit</span>
+        </div>
+        <div class="history-strip" id="historyStrip"></div>
+    </section>
+</div>
+
+<script>
+    const DB_KEY = 'pro_habit_circular_tracker_v1';
+    const MAIN_CIRCUMFERENCE = 2 * Math.PI * 36; // 226.19
+    const MINI_CIRCUMFERENCE = 2 * Math.PI * 22; // 138.23
+
+    const dateInput = document.getElementById('dateInput');
+
+    function getLocalToday() {
+        const d = new Date();
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d - offset).toISOString().split('T')[0];
+    }
+
+    function readStore() {
+        return JSON.parse(localStorage.getItem(DB_KEY) || '{}');
+    }
+
+    function getRecord(dateStr) {
+        const store = readStore();
+        return store[dateStr] || {
+            wakeupDone: false,
+            wakeupTime: '05:30',
+            prepDone: false,
+            studyHours: 0,
+            mockDone: false,
+            mockScore: '',
+            activityDone: false,
+            activityMins: 120,
+            reviewDone: false,
+            notes: ''
+        };
+    }
+
+    function setRingProgress(circleId, percent) {
+        const clamped = Math.max(0, Math.min(100, percent));
+        const offset = MAIN_CIRCUMFERENCE - (clamped / 100) * MAIN_CIRCUMFERENCE;
+        document.getElementById(circleId).style.strokeDashoffset = offset;
+    }
+
+    function isSundayDate(dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d).getDay() === 0;
+    }
+
+    function computeStats(dateStr, rec) {
+        const sun = isSundayDate(dateStr);
+        const total = sun ? 6 : 4;
+        let done = 0;
+
+        if (rec.wakeupDone) done++;
+        if (rec.prepDone) done++;
+        if (rec.studyHours >= 8) done++;
+        if (rec.reviewDone) done++;
+
+        if (sun) {
+            if (rec.mockDone) done++;
+            if (rec.activityDone && rec.activityMins >= 120) done++;
+        }
+
+        const pct = Math.round((done / total) * 100);
+        return { sun, total, done, pct };
+    }
+
+    function renderHourButtons(activeHours) {
+        const grid = document.getElementById('hourBlocksGrid');
+        grid.innerHTML = '';
+        for (let h = 1; h <= 10; h++) {
+            const btn = document.createElement('div');
+            btn.className = `hour-cell ${h >= 8 ? 'target-zone' : ''} ${h <= activeHours ? 'active' : ''}`;
+            btn.textContent = `${h} hr`;
+            btn.onclick = () => {
+                const dateStr = dateInput.value;
+                const rec = getRecord(dateStr);
+                rec.studyHours = (rec.studyHours === h) ? h - 1 : h;
+                saveRecord(dateStr, rec);
+                loadSelectedDate();
+            };
+            grid.appendChild(btn);
+        }
+    }
+
+    function saveRecord(dateStr, rec) {
+        const store = readStore();
+        store[dateStr] = rec;
+        localStorage.setItem(DB_KEY, JSON.stringify(store));
+    }
+
+    function persistCurrentDay() {
+        const dateStr = dateInput.value;
+        const rec = getRecord(dateStr);
+
+        rec.wakeupDone = document.getElementById('chkWakeup').checked;
+        rec.wakeupTime = document.getElementById('inpWakeupTime').value;
+        rec.prepDone = document.getElementById('chkPrep').checked;
+        rec.mockDone = document.getElementById('chkMock').checked;
+        rec.mockScore = document.getElementById('inpMockScore').value;
+        rec.activityDone = document.getElementById('chkActivity').checked;
+        rec.activityMins = parseInt(document.getElementById('inpActivityMins').value, 10) || 0;
+        rec.reviewDone = document.getElementById('chkReview').checked;
+        rec.notes = document.getElementById('txtNotes').value;
+
+        saveRecord(dateStr, rec);
+        refreshDashboard(dateStr, rec);
+    }
+
+    function loadSelectedDate() {
+        const dateStr = dateInput.value;
+        const rec = getRecord(dateStr);
+
+        document.getElementById('chkWakeup').checked = rec.wakeupDone;
+        document.getElementById('inpWakeupTime').value = rec.wakeupTime;
+        document.getElementById('chkPrep').checked = rec.prepDone;
+        document.getElementById('chkMock').checked = rec.mockDone;
+        document.getElementById('inpMockScore').value = rec.mockScore;
+        document.getElementById('chkActivity').checked = rec.activityDone;
+        document.getElementById('inpActivityMins').value = rec.activityMins;
+        document.getElementById('chkReview').checked = rec.reviewDone;
+        document.getElementById('txtNotes').value = rec.notes;
+
+        refreshDashboard(dateStr, rec);
+    }
+
+    function refreshDashboard(dateStr, rec) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const stats = computeStats(dateStr, rec);
+
+        // Header date & Sunday badge
+        document.getElementById('formattedDateText').textContent = dt.toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+        });
+        document.getElementById('sundayPill').style.display = stats.sun ? 'inline-block' : 'none';
+
+        // Ring 1: Overall Execution
+        setRingProgress('ringOverall', stats.pct);
+        document.getElementById('pctOverallText').textContent = `${stats.pct}%`;
+        document.getElementById('tasksCompletedText').textContent = `${stats.done} / ${stats.total} Tasks`;
+        document.getElementById('executionStatus').textContent =
+            stats.pct === 100 ? 'All targets achieved' : `${stats.total - stats.done} remaining today`;
+
+        // Ring 2: Study Hours
+        const studyPct = (rec.studyHours / 10) * 100;
+        setRingProgress('ringStudy', studyPct);
+        document.getElementById('hrsStudyRingText').textContent = `${rec.studyHours}h`;
+        document.getElementById('studyStatusBadge').textContent = `${rec.studyHours} / 10 Hours`;
+        document.getElementById('studyRemainingSub').textContent =
+            rec.studyHours >= 8 ? 'Minimum 8h target met!' : `${8 - rec.studyHours}h left to min goal`;
+
+        // Ring 3: Morning Routine
+        const morningDone = (rec.wakeupDone ? 1 : 0) + (rec.prepDone ? 1 : 0);
+        setRingProgress('ringWakeup', (morningDone / 2) * 100);
+        document.getElementById('wakeupRingText').textContent = rec.wakeupDone ? rec.wakeupTime : '--:--';
+        document.getElementById('morningRatioText').textContent = `${morningDone} / 2 Done`;
+
+        // Ring 4: Sunday Protocol
+        const sunTasksDone = (rec.mockDone ? 1 : 0) + ((rec.activityDone && rec.activityMins >= 120) ? 1 : 0);
+        if (stats.sun || sunTasksDone > 0) {
+            setRingProgress('ringSunday', (sunTasksDone / 2) * 100);
+            document.getElementById('sundayRingText').textContent = `${sunTasksDone}/2`;
+            document.getElementById('sundayMetricSub').textContent =
+                sunTasksDone === 2 ? 'Sunday goals complete' : 'Mock & 2h activity';
+        } else {
+            setRingProgress('ringSunday', 0);
+            document.getElementById('sundayRingText').textContent = 'SUN';
+            document.getElementById('sundayMetricSub').textContent = 'Scheduled for Sunday';
+        }
+
+        // Row Highlight States
+        document.getElementById('itemWakeup').classList.toggle('done', rec.wakeupDone);
+        document.getElementById('itemPrep').classList.toggle('done', rec.prepDone);
+        document.getElementById('itemStudyGoal').classList.toggle('done', rec.studyHours >= 8);
+        document.getElementById('chkStudyMin').checked = rec.studyHours >= 8;
+        document.getElementById('itemMock').classList.toggle('done', rec.mockDone);
+        document.getElementById('itemActivity').classList.toggle('done', rec.activityDone && rec.activityMins >= 120);
+        document.getElementById('itemReview').classList.toggle('done', rec.reviewDone);
+
+        renderHourButtons(rec.studyHours);
+        renderCircularHistory(dateStr);
+    }
+
+    function renderCircularHistory(selectedDateStr) {
+        const strip = document.getElementById('historyStrip');
+        strip.innerHTML = '';
+        const [y, m, d] = selectedDateStr.split('-').map(Number);
+        const anchor = new Date(y, m - 1, d);
+
+        for (let i = -6; i <= 0; i++) {
+            const cur = new Date(anchor);
+            cur.setDate(anchor.getDate() + i);
+            const offset = cur.getTimezoneOffset() * 60000;
+            const dStr = new Date(cur - offset).toISOString().split('T')[0];
+
+            const rec = getRecord(dStr);
+            const stats = computeStats(dStr, rec);
+            const dashOffset = MINI_CIRCUMFERENCE - (stats.pct / 100) * MINI_CIRCUMFERENCE;
+            const strokeColor = stats.pct === 100 ? '#059669' : (stats.sun ? '#7c3aed' : '#2563eb');
+
+            const node = document.createElement('div');
+            node.className = `history-node ${dStr === selectedDateStr ? 'selected' : ''} ${stats.sun ? 'sunday-node' : ''}`;
+            node.onclick = () => {
+                dateInput.value = dStr;
+                loadSelectedDate();
+            };
+
+            node.innerHTML = `
+                <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">${cur.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">${cur.getDate()} ${cur.toLocaleDateString('en-US', { month: 'short' })}</div>
+                <div class="mini-ring-wrap">
+                    <svg viewBox="0 0 52 52">
+                        <circle class="mini-ring-bg" cx="26" cy="26" r="22"></circle>
+                        <circle class="mini-ring-fill" cx="26" cy="26" r="22"
+                            stroke="${strokeColor}"
+                            style="stroke-dasharray: ${MINI_CIRCUMFERENCE}; stroke-dashoffset: ${dashOffset};">
+                        </circle>
+                    </svg>
+                    <div class="mini-ring-label">${stats.pct}%</div>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-secondary);">${rec.studyHours}h study</div>
+            `;
+            strip.appendChild(node);
+        }
+    }
+
+    function shiftDate(delta) {
+        const [y, m, d] = dateInput.value.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        dt.setDate(dt.getDate() + delta);
+        const offset = dt.getTimezoneOffset() * 60000;
+        dateInput.value = new Date(dt - offset).toISOString().split('T')[0];
+        loadSelectedDate();
+    }
+
+    function jumpToday() {
+        dateInput.value = getLocalToday();
+        loadSelectedDate();
+    }
+
+    function exportBackup() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(readStore(), null, 2));
+        const a = document.createElement('a');
+        a.href = dataStr;
+        a.download = `habit-progress-backup-${getLocalToday()}.json`;
+        a.click();
+    }
+
+    // Boot
+    dateInput.value = getLocalToday();
+    loadSelectedDate();
+</script>
+
+</body>
+</html>
